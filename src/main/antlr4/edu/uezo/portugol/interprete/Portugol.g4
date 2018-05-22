@@ -1,5 +1,14 @@
 grammar Portugol;
 
+@parser::header {
+	import java.util.Map;
+	import java.util.HashMap;
+}
+
+@parser::members {
+	Map<String, Object> symbolTable = new HashMap<String, Object>();
+}
+
 algoritmo: INICIO sentenca* FIM;
 sentenca: decl_var_r | atr_var_r | imprima | leia_r | condicional ;
 
@@ -13,9 +22,11 @@ leia_r: LEIA ID PONTO_VIRGULA;
 
 expressao returns[Object valor]:
 	t1 = fator {$valor= (double)$t1.value;} 
-	(PLUS t2=);
+	(SOMA t2=fator {$valor = (double)$t1.value + (double)$t2.value);}  );
 
-fator : ;
+fator returns [Object valor] :
+	t1 = termo {$valor= (double)$t1.value; }
+	(MULT t2=termo {$valor = (double)$t1.value + (double)$t2.value);}  ) ;
 
 termo returns [Object valor]: 
 TXT {$valor = $TXT.text;} | 
