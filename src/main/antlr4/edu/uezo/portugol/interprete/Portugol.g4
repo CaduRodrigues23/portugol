@@ -9,36 +9,68 @@ grammar Portugol;
 	Map<String, Object> symbolTable = new HashMap<String, Object>();
 }
 
-algoritmo: INICIO sentenca* FIM;
-sentenca: decl_var_r | atr_var_r | imprima | leia_r | condicional ;
+algoritmo: INICIO 
+	{
+		List<ASTNode> body = new ArrayList<ASTNode>();
+	}
+	(sentenca {body.add($sentenca.node);})* 
+	{
+		/*for (ASTNode n : body) {
+			n.execute();
+		}*/
+	}
+	FIM;
 
-decl_var_r: REAL ID PONTO_VIRGULA;
+sentenca returns [ASTNode node]: decl_var_r | atr_var | imprima {node = $imprima.node;} | leia | condicional {node = condicional.node;} ;
 
-atr_var_r: ID ATRIB NUM_FLUT PONTO_VIRGULA;
+decl_var_r returns [ASTNode node]: REAL ID PONTO_VIRGULA;
+decl_var_i returns [ASTNode node]: INTEIRO ID PONTO_VIRGULA;
+decl_var_c returns [ASTNode node]: CARACTER ID PONTO_VIRGULA;
+decl_var_b returns [ASTNode node]: BOOLEANO ID PONTO_VIRGULA;
 
-imprima: IMPRIMA expressao PONTO_VIRGULA;
+atr_var returns [ASTNode node]: ID ATRIB termo PONTO_VIRGULA;
+
+imprima returns [ASTNode node]: IMPRIMA expressao PONTO_VIRGULA
+	{$node = new Print($expressao.node);}
+;
 	
-leia_r: LEIA ID PONTO_VIRGULA;
+leia returns [ASTNode node]: LEIA ID PONTO_VIRGULA
+	{node = new Read($ID.text);}
+;
 
-expressao returns[Object valor]:
-	t1 = fator {$valor= (double)$t1.value;} 
-	(SOMA t2=fator {$valor = (double)$t1.value + (double)$t2.value);}  );
+condicional returns [ASTNode node]: SE PAREN_ABRE expressao PAREN_FECHA 
+			{
+				List<ASTNode> body = new ArrayList<ASTNode>();
+			}
+			ENTAO ( s1 = sentenca {body.add($s1.node);})* 
+			SENAO
+			{
+				List<ASTNode> counterBody = new ArrayList<ASTNode>();
+			}
+			 (s2 = sentenca {counterBody.add($s2.node);})* 
+			{
+				$node = new If($expressao.node, body, counterBody);
+			}
+			FIMSE;
 
-fator returns [Object valor] :
-	t1 = termo {$valor= (double)$t1.value; }
-	(MULT t2=termo {$valor = (double)$t1.value + (double)$t2.value);}  ) ;
+expressao returns [ASTNode node]:
+	 f1 = fator {$node = $f1.node;} 
+	(SOMA f2=fator {$node = new Addition($node, $f2.node);} |
+	SUB f2=fator {$node = new Subtraction($node, $f2.node);})*;
 
-termo returns [Object valor]: 
-TXT {$valor = $TXT.text;} | 
-NUM {$valor = Integer.parseInt($NUM.text);} |
- NUM_FLUT {$valor = Double.parseDouble($NUM_FLUT.text);} | 
- ID {$valor = $ID.text;} 
- PAREN_ABRE expressao {$valor = $expressao.valor;} PAREN_FECHA;
+fator returns [ASTNode node]:
+	 t1 = termo {$node = $t1.node;}
+	(MULT  t2=termo {$node = new Multiplication($node, $t2.node);} |
+	DIV t2=termo {$node = new Division($node, $t2.node);})* ;
 
-condicional: SE PAREN_ABRE expressao PAREN_FECHA 
-			ENTAO sentenca* 
-			SENAO sentenca* FIMSE;
-			
+termo returns [ASTNode node]: 
+NUM {$node = new Constant(Integer.parseInt($NUM.text));} |
+ NUM_FLUT {$node = new Constant(Double.parseDouble($NUM_FLUT.text));} | 
+ TXT {$node = new Constant($TXT.text);} | 
+ BOOL {$node = new Constant($BOOL.text);}
+ | PAREN_ABRE expressao {$node = $expressao.node;} PAREN_FECHA;
+
+
 
 
 INICIO: 'inicio';
@@ -79,6 +111,7 @@ ASPAS: '"';
 PONTO_VIRGULA: ';';
 
 BOOL: 'verdadeiro' | 'falso';
+
 
 ID: [a-zA-Z_][a-zA-Z0-9_]*;
 NUM_FLUT: [0-9]+ '.' [0-9]*;
