@@ -2,19 +2,19 @@ package edu.uezo.portugol.interprete.ast;
 
 import java.util.Map;
 
-public class Constant implements ASTNode {
-	private Object value;
+public class VarRef implements ASTNode {
+	private String name;
+	 
 	
-	
-	public Constant(Object value) {
+	public VarRef(String name) {
 		super();
-		this.value = value;
+		this.name = name;
 	}
 
 
 	@Override
 	public Object execute(Map<String, Object> symbolTable) {
-		return value;
+		return symbolTable.get(name);
 	}
 
 }

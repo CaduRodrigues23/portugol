@@ -1,5 +1,7 @@
 package edu.uezo.portugol.interprete.ast;
 
+import java.util.Map;
+
 public class Subtraction implements ASTNode {
 	private ASTNode operand1;
 	private ASTNode operand2;
@@ -10,10 +12,8 @@ public class Subtraction implements ASTNode {
 		this.operand2 = operand2;
 	}
 
-
-
 	@Override
-	public Object execute() {
-		return (double)operand1.execute() - (double)operand2.execute();
+	public Object execute(Map<String, Object> symbolTable) {
+		return (double)operand1.execute(symbolTable) - (double)operand2.execute(symbolTable);
 	}
 }

@@ -2,17 +2,19 @@ package edu.uezo.portugol.interprete.ast;
 
 import java.util.Map;
 
-public class Print implements ASTNode {
-	private ASTNode data;
+public class VarDecl implements ASTNode {
+
+	private String name;
 	
-	public Print(ASTNode data) {
+	public VarDecl(String name) {
 		super();
-		this.data = data;
+		this.name = name;
 	}
+
 
 	@Override
 	public Object execute(Map<String, Object> symbolTable) {
-		System.out.println(data.execute(symbolTable));
+		symbolTable.put(name, new Object());
 		return null;
 	}
 
