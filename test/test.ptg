@@ -1,1 +1,16 @@
-hello world
+inicio
+ var salFixo;
+ var valVendas;
+ var salTotal;
+ imprima "insira o valor do salario fixo";
+ leia salFixo;
+ imprima "insira o valor das vendas evetuadas";
+ leia valVendas;
+ se (valVendas <= 1500) entao
+  salTotal := salFixo + (valVendas * 0.03);
+ senao
+  salTotal := salFixo + (valVendas * 0.05);
+ fimse;
+ imprima "salário total: ";
+ imprima salTotal;
+fim.
