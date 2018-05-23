@@ -3,6 +3,9 @@ grammar Portugol;
 @parser::header {
 	import java.util.Map;
 	import java.util.HashMap;
+	import java.util.List;
+	import java.util.ArrayList;
+	import edu.uezo.portugol.interprete.ast.*;
 }
 
 @parser::members {
@@ -12,30 +15,47 @@ grammar Portugol;
 algoritmo: INICIO 
 	{
 		List<ASTNode> body = new ArrayList<ASTNode>();
+		Map<String, Object> symbolTable = new HashMap<String, Object>();
 	}
 	(sentenca {body.add($sentenca.node);})* 
 	{
-		/*for (ASTNode n : body) {
-			n.execute();
-		}*/
+		for (ASTNode n : body) {
+			n.execute(symbolTable);
+		}
 	}
 	FIM;
+	
 
-sentenca returns [ASTNode node]: decl_var_r | atr_var | imprima {node = $imprima.node;} | leia | condicional {node = condicional.node;} ;
+sentenca returns [ASTNode node]: 
+decl_var  {$node = $decl_var.node;} |
+//decl_var_r {$node = $decl_var_r.node;} |
+//decl_var_i {$node = $decl_var_i.node;} |
+//decl_var_c {$node = $decl_var_c.node;} |
+//decl_var_b {$node = $decl_var_b.node;} |
+ atr_var {$node = $atr_var.node;} | 
+imprima {$node = $imprima.node;} | 
+leia {$node = $leia.node;} |
+ condicional {$node = $condicional.node;} ;
 
-decl_var_r returns [ASTNode node]: REAL ID PONTO_VIRGULA;
-decl_var_i returns [ASTNode node]: INTEIRO ID PONTO_VIRGULA;
-decl_var_c returns [ASTNode node]: CARACTER ID PONTO_VIRGULA;
-decl_var_b returns [ASTNode node]: BOOLEANO ID PONTO_VIRGULA;
+//decl_var_r returns [ASTNode node]: REAL ID PONTO_VIRGULA;
+//decl_var_i returns [ASTNode node]: INTEIRO ID PONTO_VIRGULA;
+//decl_var_c returns [ASTNode node]: CARACTER ID PONTO_VIRGULA;
+//decl_var_b returns [ASTNode node]: BOOLEANO ID PONTO_VIRGULA;
 
-atr_var returns [ASTNode node]: ID ATRIB termo PONTO_VIRGULA;
+decl_var returns [ASTNode node]: VAR ID PONTO_VIRGULA
+	{$node = new VarDecl($ID.text);}
+;
+
+atr_var returns [ASTNode node]: ID ATRIB expressao PONTO_VIRGULA
+	{$node = new VarAssign($ID.text, $expressao.node);}
+;
 
 imprima returns [ASTNode node]: IMPRIMA expressao PONTO_VIRGULA
 	{$node = new Print($expressao.node);}
 ;
 	
 leia returns [ASTNode node]: LEIA ID PONTO_VIRGULA
-	{node = new Read($ID.text);}
+	{$node = new Read($ID.text);}
 ;
 
 condicional returns [ASTNode node]: SE PAREN_ABRE expressao PAREN_FECHA 
@@ -56,24 +76,26 @@ condicional returns [ASTNode node]: SE PAREN_ABRE expressao PAREN_FECHA
 expressao returns [ASTNode node]:
 	 f1 = fator {$node = $f1.node;} 
 	(SOMA f2=fator {$node = new Addition($node, $f2.node);} |
-	SUB f2=fator {$node = new Subtraction($node, $f2.node);})*;
+	SUB f3=fator {$node = new Subtraction($node, $f3.node);})*;
 
 fator returns [ASTNode node]:
 	 t1 = termo {$node = $t1.node;}
 	(MULT  t2=termo {$node = new Multiplication($node, $t2.node);} |
-	DIV t2=termo {$node = new Division($node, $t2.node);})* ;
+	DIV t3=termo {$node = new Division($node, $t3.node);})* ;
 
 termo returns [ASTNode node]: 
 NUM {$node = new Constant(Integer.parseInt($NUM.text));} |
  NUM_FLUT {$node = new Constant(Double.parseDouble($NUM_FLUT.text));} | 
  TXT {$node = new Constant($TXT.text);} | 
- BOOL {$node = new Constant($BOOL.text);}
- | PAREN_ABRE expressao {$node = $expressao.node;} PAREN_FECHA;
+ BOOL {$node = new Constant($BOOL.text);} |
+ ID {$node = new VarRef($ID.text); }|
+ PAREN_ABRE expressao {$node = $expressao.node;} PAREN_FECHA;
 
 
 
 
 INICIO: 'inicio';
+VAR: 'var';
 REAL: 'real';
 INTEIRO: 'inteiro';
 CARACTER: 'caracter';
